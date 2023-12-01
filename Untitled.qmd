@@ -1,0 +1,245 @@
+```{r}
+#Gaining insights from data analyst jobs can be valuable for various reasons:
+#Industry Trends
+#Skill Requirements
+#Salary Information
+#Industry Preferences
+#Job Market Dynamics
+#Glassdoor is an American website where current and former employees anonymously review companies
+#Columns of Dataset
+#1) Job Title
+#2) Job Description
+#3) Rating 
+#4) Company Name
+#5) Location
+#6) Size
+#7) Industry
+#8) Sector
+#9) Revenue
+#SOURCE-https://www.kaggle.com/datasets/andrewmvd/data-analyst-jobs
+```
+
+```{r}
+data<-read.csv("DataAnalyst.csv")
+View(data)
+dim(data)
+# 2253 rows and 15 columns
+data<-data[,-1]
+```
+
+```{r}
+# Replace -1 with NA
+data[data == -1] <- NA
+
+# Replace -1.0 with NA
+data[data == -1.0] <- NA
+
+# Replace '-1' with NA
+data[data == '-1'] <- NA
+
+View(data)
+```
+
+```{r}
+library(dplyr)
+
+data <- data %>%
+  mutate(Job.Title = case_when(
+    Job.Title %in% c('Sr. Data Analyst', 'sr. data analyst', 'Sr Data Analyst', 'sr data analyst', 'senior data analyst', 'Senior Data Analyst', 'Data Analyst III', 'data analyst iii', 'senior data analyst') ~ 'Senior Data Analyst',
+    Job.Title %in% c('Data Analyst I', 'data analyst i', 'Data Analyst Junior', 'data analyst junior', 'Junior Data Analyst', 'Junior Data AnalystI', 'Junior Data Analystl') ~ 'Junior Data Analyst',
+    Job.Title %in% c('Data Analyst II', 'data analyst ii', 'Middle Data Analyst') ~ 'Middle Data Analyst',
+    TRUE ~ Job.Title))  
+View(data)
+```
+
+
+
+```{r}
+#Creating skill indices 
+df<-data
+```
+
+```{r}
+library(readr)
+library(tidyr)
+
+df <- df %>%
+  separate(Salary.Estimate, into = c("min_value", "max_value"), sep = "-")
+# Extracting numbers only
+df$min_salary <- parse_number(df$min_value)
+df$max_salary <- parse_number(df$max_value)
+
+# Removing company name, location, min_value and max_value in cleaner3
+df <- df %>% 
+  select(-min_value,-max_value, )
+# Multiplying min_salary and max_salary by 1000
+df$min_salary_k <- df$min_salary * 1000
+df$max_salary_k <- df$max_salary * 1000
+# Removing min_salary and max_salary
+df <- df %>% 
+  select(-min_salary, -max_salary)
+# Creating Average Salary column
+df$average_salary = (df$min_salary_k + df$max_salary_k)/2
+```
+
+
+```{r}
+library(stringr)
+
+df$SQL <- str_detect(df$Job.Description, "SQL")
+df$Python <- str_detect(df$Job.Description, "Python")
+df$R <- str_detect(df$Job.Description, "\\bR\\b")  
+df$Tableau <- str_detect(df$Job.Description, "Tableau")
+df$PowerBI <- str_detect(df$Job.Description, "PowerBI|Power BI")
+df$Excel <- str_detect(df$Job.Description, "Excel")
+df$Java <- str_detect(df$Job.Description, "Java")
+df$AWS <- str_detect(df$Job.Description, "AWS")
+df$Spark <- str_detect(df$Job.Description, "Spark")
+df$PowerPoint <- str_detect(df$Job.Description, "PowerPoint")
+df$Snowflake <- str_detect(df$Job.Description, "Snowflake")
+df$Hadoop <- str_detect(df$Job.Description, "Hadoop")
+df$VBA <- str_detect(df$Job.Description, "VBA")
+df$Azure <- str_detect(df$Job.Description, "Azure")
+df$Scala <- str_detect(df$Job.Description, "Scala")
+df$Kafka <- str_detect(df$Job.Description, "Kafka")
+df$Looker <- str_detect(df$Job.Description, "Looker")
+df$Word <- str_detect(df$Job.Description, "Word")
+
+# Creating Degree Indices
+df$Bachelor <- str_detect(df$Job.Description, "Bachelor")
+df$Master <- str_detect(df$Job.Description, "Master")
+df$No_Degree <- !str_detect(df$Job.Description, "Bachelor") &
+  !str_detect(df$Job.Description, "Master")
+```
+
+
+```{r}
+# Creating Job Title Indices
+
+library(stringr)
+
+df$Science <- str_detect(df$Job.Title, "Science|Scientist")
+df$Business <- str_detect(df$Job.Title, "Business")
+df$Engineer <- str_detect(df$Job.Title, "Engineer")
+df$Research <- str_detect(df$Job.Title, "Research")
+
+
+```
+
+```{r}
+skills_df <- data.frame(
+  skills = c("SQL", "Python", "R", "Excel", "Tableau", "PowerBI", "PowerPoint", "Word", "Azure", "Java", "Spark", "Snowflake", "Hadoop", "VBA", "Scala", "Kafka", "Looker")
+)
+
+skills_df <- skills_df %>%
+  mutate(
+    mean_salary = sapply(skills, function(skill) {
+      round(mean(df$average_salary[df[[skill]] == TRUE], na.rm = TRUE), 2)
+    })
+  )
+skills_df <- skills_df %>%
+  mutate(
+    percentage = sapply(skills, function(skill) {
+      round(sum(df[[skill]] == TRUE)/2253*100, 2)
+    })
+  )
+View(skills_df)
+```
+
+```{r}
+degree_df <- data.frame(degree = c("bachelor", "master", "no_degree"),
+                     mean_salary = c(round(mean(df$average_salary[df$Bachelor == "TRUE"],na.rm = TRUE)), 
+                                     round(mean(df$average_salary[df$Master == "TRUE"],na.rm = TRUE)), 
+                                     round(mean(df$average_salary[df$No_Degree == "TRUE"],na.rm = TRUE))),
+                     percentage = c(round(sum(df$Bachelor == "TRUE")/2253*100, 2), 
+                                    round(sum(df$Master == "TRUE")/2253*100, 2), 
+                                    round(sum(df$No_Degree == "TRUE")/2253*100, 2)))
+View(degree_df)
+```
+
+```{r}
+job_df <- data.frame(Field = c("Science", "Business", "Engineer","Research"),
+                     mean_salary = c(round(mean(df$average_salary[df$Science == "TRUE"])), 
+                                     round(mean(df$average_salary[df$Business == "TRUE"])), 
+                                     round(mean(df$average_salary[df$Engineer == "TRUE"])),
+                                     round(mean(df$average_salary[df$Research == "TRUE"]))),
+                     percentage = c(round(sum(df$Science == "TRUE")/2253*100, 2), 
+                                    round(sum(df$Business == "TRUE")/2253*100, 2), 
+                                    round(sum(df$Engineer == "TRUE")/2253*100, 2),
+                                    round(sum(df$Research == "TRUE")/2253*100, 2)))
+View(job_df)
+```
+
+```{r}
+library(ggplot2)
+ggplot(data = skills_df, aes(x = percentage, y = reorder(skills, percentage), fill = reorder(skills, percentage))) +
+  geom_col() +
+geom_text(aes(label = percentage), hjust = 0, colour = "Black") +
+theme(legend.position="none") +
+  labs(x = "Occurrence (%)", y = "Skills",
+       title ="Skills vs Percentage of Occurrence",
+       subtitle = "Which skills are requested most?",
+       caption = "According to data on glassdoor .
+       https://www.kaggle.com/datasets/andrewmvd/data-analyst-jobs")
+```
+```{r}
+#Skills vs Salary
+ggplot(data = skills_df, aes(x = mean_salary, y = reorder(skills, mean_salary), fill = reorder(skills, mean_salary))) +
+  geom_col() +
+  geom_text(aes(label = mean_salary), hjust = 1.25, colour = "white") +
+theme(legend.position="none") +
+  labs(x = "Average Salary", y = "Skills",
+       title ="Skills vs Salary",
+       subtitle = "Which skills are compensated best?",
+       caption = "According to data on glassdoor .
+       https://www.kaggle.com/datasets/andrewmvd/data-analyst-jobs")
+```
+
+```{r}
+# Degree vs Occurrence plot
+ggplot(data = degree_df, aes(x = percentage, y = reorder(degree, percentage), fill = reorder(degree, percentage))) +
+  geom_col() +
+geom_text(aes(label = percentage), hjust = 2, colour = "white") +
+theme(legend.position="none") +
+  labs(x = "Occurrence (%)", y = "Degree",
+       title ="Degree vs Percentage of Occurence",
+       subtitle = "Which degree are requested most?",
+       caption = "According to data  on glassdoor .
+       https://www.kaggle.com/datasets/andrewmvd/data-analyst-jobs")
+```
+
+
+```{r}
+#Degree vs Salary
+ggplot(data = degree_df, aes(x = mean_salary, y = reorder(degree, mean_salary), fill = reorder(degree, mean_salary))) +
+  geom_col() +
+geom_text(aes(label = mean_salary), hjust = 2, colour = "white") +
+theme(legend.position="none") +
+  labs(x = "Average Salary", y = "Degree",
+       title ="Degree vs Salary",
+       subtitle = "Which degree are compensated best?",
+       caption = "According to data  on glassdoor .
+       https://www.kaggle.com/datasets/andrewmvd/data-analyst-jobs")
+
+```
+
+```{r}
+#Field and Mean Salary
+ggplot(data = job_df, aes(x = mean_salary, y = reorder(Field, mean_salary), fill = reorder(Field, mean_salary))) +
+  geom_col() +
+geom_text(aes(label = mean_salary), hjust = 2, colour = "white") +
+theme(legend.position="none") +
+  labs(x = "Mean Salary", y = "Field",
+       title ="Field and Mean Salary",
+       subtitle = "Average salary as per the field?",
+       caption = "According to data collected on glassdoor.
+       https://www.kaggle.com/datasets/andrewmvd/data-analyst-jobs")
+```
+```{r}
+#Future course of Action
+#Finding out Salaries as per the job title
+#Finding out how the type of industries affect the revenue and the salaries of the employees
+#How size of the company affect the salary and the revenue
+#
+```
+
