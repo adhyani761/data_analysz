@@ -611,10 +611,10 @@ ggplot(top_salary_industry, aes(x = lowest_salary_avg, xend = highest_salary_avg
 ```
 ```{r}
 
-# Assuming your dataset is named 'df'
+
 library(plotly)
 
-# Create an animated bubble chart
+
 animated_bubble_chart <- plot_ly(
   df,
   x = ~max_salary_k,
@@ -642,11 +642,11 @@ animated_bubble_chart
 
 
 ```{r}
-# Install and load required packages
+
 suppressWarnings(install.packages("psych"))
 library(psych)
 
-# Assuming your dataset is named 'df'
+# 
 # Subset the data with relevant numerical variables
 numerical_vars <- df[, c("Rating", "max_salary_k", "min_salary_k", "average_salary")]
 
@@ -662,7 +662,7 @@ suppressWarnings(pairs.panels(numerical_vars,
 library(ggplot2)
 library(ggExtra)
 
-# Assuming your dataset is named 'df'
+
 # Scatterplot
 theme_set(theme_bw())  # pre-set the bw theme.
 df_select <- df[df$max_salary_k & df$min_salary_k  , ]
